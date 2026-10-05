@@ -1,8 +1,10 @@
-SELECT 
-    o.order_id,
-    c.customer_name,
-    p.category,
-    o.sales
-FROM orders o
-JOIN customers c ON o.customer_id = c.customer_id
-JOIN products p ON o.product_id = p.product_id;
+SELECT sales_id, sale_date, region, product_category
+FROM flourmills_sales
+WHERE product_category = (
+    SELECT product_category
+    FROM flourmills_sales
+    GROUP BY product_category
+    ORDER BY SUM(total_amount) DESC
+    LIMIT 1
+)
+ORDER BY sales_id ASC;

@@ -1,6 +1,5 @@
 SELECT 
-    c.region,
-    COALESCE(SUM(o.sales), 0) AS total_sales
-FROM customers c
-LEFT JOIN orders o ON c.customer_id = o.customer_id
-GROUP BY c.region;
+    product_name,
+    total_amount,
+    (SELECT AVG(total_amount) FROM flourmills_sales) AS avg_amount
+FROM flourmills_sales;

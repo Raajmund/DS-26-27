@@ -1,7 +1,9 @@
-SELECT 
-    c.customer_name,
-    SUM(o.sales) AS total_sales
-FROM customers c
-JOIN orders o ON c.customer_id = o.customer_id
-GROUP BY c.customer_id, c.customer_name
-HAVING SUM(o.sales) > 2000;
+SELECT *
+FROM flourmills_sales f1
+WHERE EXISTS (
+    SELECT 1
+    FROM flourmills_sales f2
+    WHERE f2.product_name = f1.product_name
+    GROUP BY f2.product_name
+    HAVING COUNT(DISTINCT EXTRACT(MONTH FROM f2.sale_date)) > 1
+);

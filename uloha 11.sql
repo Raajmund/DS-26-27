@@ -1,8 +1,11 @@
 SELECT 
-    c.region,
-    SUM(o.sales) AS total_sales,
-    AVG(o.discount) AS avg_discount,
-    COUNT(o.order_id) AS total_orders
-FROM customers c
-JOIN orders o ON c.customer_id = o.customer_id
-GROUP BY c.region;
+    f1.product_category,
+    f1.product_name,
+    f1.total_amount
+FROM flourmills_sales f1
+WHERE EXISTS (
+    SELECT 1
+    FROM flourmills_sales f2
+    WHERE f2.product_category = f1.product_category
+      AND f2.total_amount > 200000
+);

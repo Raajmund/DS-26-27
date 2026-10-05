@@ -1,6 +1,12 @@
 SELECT 
-    c.region,
-    SUM(o.sales) AS total_sales
-FROM customers c
-JOIN orders o ON c.customer_id = o.customer_id
-GROUP BY c.region;
+    product_category,
+    total_sales
+FROM (
+    SELECT 
+        product_category,
+        SUM(total_amount) AS total_sales
+    FROM flourmills_sales
+    GROUP BY product_category
+) AS category_sales
+WHERE total_sales > 50000000
+ORDER BY total_sales DESC;

@@ -1,6 +1,11 @@
 SELECT 
-    c.customer_name,
-    COALESCE(o.order_id, 'Bez objednávky') AS order_id,
-    COALESCE(o.sales, 0) AS sales
-FROM customers c
-FULL OUTER JOIN orders o ON c.customer_id = o.customer_id;
+    month,
+    monthly_sales
+FROM (
+    SELECT 
+        EXTRACT(MONTH FROM sale_date) AS month,
+        SUM(total_amount) AS monthly_sales
+    FROM flourmills_sales
+    GROUP BY EXTRACT(MONTH FROM sale_date)
+) AS monthly_summary
+ORDER BY monthly_sales DESC;

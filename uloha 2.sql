@@ -1,8 +1,3 @@
-SELECT 
-    o.order_id,
-    c.customer_name,
-    o.sales
-FROM orders o
-JOIN customers c ON o.customer_id = c.customer_id
-WHERE o.sales > 500
-ORDER BY o.sales DESC;
+SELECT product_name, total_amount
+FROM flourmills_sales
+WHERE total_amount > (SELECT AVG(total_amount) FROM flourmills_sales);

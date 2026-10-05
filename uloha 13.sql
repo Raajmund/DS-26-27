@@ -1,13 +1,14 @@
 SELECT 
-    c.customer_name,
-    SUM(o.sales) AS total_sales,
-    AVG(o.discount) AS avg_discount,
-    COUNT(o.order_id) AS total_orders,
-    CASE 
-        WHEN SUM(o.sales) > 2500 THEN 'VIP'
-        ELSE 'REGULAR'
-    END AS customer_type
-FROM customers c
-JOIN orders o ON c.customer_id = o.customer_id
-GROUP BY c.customer_id, c.customer_name
-ORDER BY total_sales DESC;
+    f1.sales_id,
+    f1.product_category,
+    f1.product_name,
+    f1.total_amount,
+    f1.region,
+    f1.sale_date
+FROM flourmills_sales f1
+WHERE EXISTS (
+    SELECT 1
+    FROM flourmills_sales f2
+    WHERE f2.region = f1.region
+      AND EXTRACT(YEAR FROM f2.sale_date) = 2024
+);

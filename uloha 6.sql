@@ -1,11 +1,12 @@
+CREATE INDEX idx_orders_region_category
+ON orders (customer_id, order_date);
+
 SELECT 
-    month,
-    monthly_sales
-FROM (
-    SELECT 
-        EXTRACT(MONTH FROM sale_date) AS month,
-        SUM(total_amount) AS monthly_sales
-    FROM flourmills_sales
-    GROUP BY EXTRACT(MONTH FROM sale_date)
-) AS monthly_summary
-ORDER BY monthly_sales DESC;
+    o.*
+FROM 
+    orders o
+JOIN 
+    customers c ON o.customer_id = c.customer_id
+WHERE 
+    c.region = 'West'
+    AND o.order_date >= '2024-01-01';

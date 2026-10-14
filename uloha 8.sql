@@ -1,10 +1,16 @@
-SELECT 
-    f1.product_name,
-    f1.product_category,
-    f1.total_amount
-FROM flourmills_sales f1
-WHERE f1.total_amount > (
-    SELECT AVG(f2.total_amount)
-    FROM flourmills_sales f2
-    WHERE f2.product_category = f1.product_category
-);
+CREATE OR REPLACE PROCEDURE get_customer_sales(p_customer_id VARCHAR(20))
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_total_sales NUMERIC(10, 2);
+BEGIN
+    SELECT COALESCE(SUM(sales), 0)
+    INTO v_total_sales
+    FROM orders
+    WHERE customer_id = p_customer_id;
+
+    RAISE NOTICE 'Zákazník: %, Celkový predaj: %', p_customer_id, v_total_sales;
+END;
+$$;
+
+CALL get_customer_sales('C001');

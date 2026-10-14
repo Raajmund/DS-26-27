@@ -1,10 +1,10 @@
-SELECT sales_id, sale_date, region, product_category
-FROM flourmills_sales
-WHERE product_category = (
-    SELECT product_category
-    FROM flourmills_sales
-    GROUP BY product_category
-    ORDER BY SUM(total_amount) DESC
-    LIMIT 1
-)
-ORDER BY sales_id ASC;
+CREATE VIEW analyst_orders AS
+SELECT 
+    order_id,
+    customer_id,
+    product_id,
+    sales,
+    quantity,
+    discount
+FROM 
+    orders;

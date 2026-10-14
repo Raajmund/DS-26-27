@@ -1,0 +1,1 @@
+ALTER DATABASE retail_sales SET datestyle TO 'ISO, MDY';

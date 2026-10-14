@@ -1,5 +1,12 @@
+CREATE INDEX idx_orders_order_date
+ON orders (order_date);
+
 SELECT 
-    product_name,
-    total_amount,
-    total_amount / (SELECT SUM(total_amount) FROM flourmills_sales) AS amount_share
-FROM flourmills_sales;
+    DATE_TRUNC('month', order_date)::date AS order_month,
+    SUM(sales) AS total_sales
+FROM 
+    orders
+GROUP BY 
+    DATE_TRUNC('month', order_date)::date
+ORDER BY 
+    order_month ASC;

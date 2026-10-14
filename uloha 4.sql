@@ -1,5 +1,6 @@
-SELECT 
-    product_name,
-    total_amount,
-    (SELECT AVG(total_amount) FROM flourmills_sales) AS avg_amount
-FROM flourmills_sales;
+CREATE INDEX idx_orders_customer_id
+ON orders (customer_id);
+
+SELECT *
+FROM orders
+WHERE customer_id = 'C001';

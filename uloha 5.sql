@@ -1,12 +1,17 @@
-CREATE INDEX idx_orders_order_date
-ON orders (order_date);
-
+WITH ranked_sales AS (
+    SELECT 
+        customer_id,
+        product_name,
+        sale_date,
+        total_amount,
+        ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY sale_date DESC) AS row_num
+    FROM flourmills_sales
+)
 SELECT 
-    DATE_TRUNC('month', order_date)::date AS order_month,
-    SUM(sales) AS total_sales
-FROM 
-    orders
-GROUP BY 
-    DATE_TRUNC('month', order_date)::date
-ORDER BY 
-    order_month ASC;
+    customer_id,
+    product_name,
+    sale_date,
+    total_amount
+FROM ranked_sales
+WHERE row_num = 1
+ORDER BY customer_id ASC;

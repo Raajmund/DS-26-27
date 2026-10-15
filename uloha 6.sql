@@ -1,12 +1,17 @@
-CREATE INDEX idx_orders_region_category
-ON orders (customer_id, order_date);
-
-SELECT 
-    o.*
-FROM 
-    orders o
-JOIN 
-    customers c ON o.customer_id = c.customer_id
-WHERE 
-    c.region = 'West'
-    AND o.order_date >= '2024-01-01';
+WITH RECURSIVE date_bounds AS (
+    SELECT 
+        MIN(sale_date) AS sale_date,
+        MAX(sale_date) AS max_date
+    FROM flourmills_sales
+    
+    UNION ALL
+    
+    SELECT 
+        CAST(sale_date + INTERVAL '1 day' AS DATE),
+        max_date
+    FROM date_bounds
+    WHERE sale_date < max_date
+)
+SELECT sale_date
+FROM date_bounds
+ORDER BY sale_date ASC;

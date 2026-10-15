@@ -1,14 +1,13 @@
-CREATE VIEW high_value_customers AS
+WITH daily_sales AS (
+    SELECT 
+        sale_date,
+        SUM(total_amount) AS total_daily_amount
+    FROM flourmills_sales
+    GROUP BY sale_date
+)
 SELECT 
-    c.customer_id,
-    c.customer_name,
-    SUM(o.sales) AS total_sales
-FROM 
-    customers c
-JOIN 
-    orders o ON c.customer_id = o.customer_id
-GROUP BY 
-    c.customer_id,
-    c.customer_name
-HAVING 
-    SUM(o.sales) > 2000;
+    sale_date,
+    total_daily_amount
+FROM daily_sales
+WHERE total_daily_amount > 3000000
+ORDER BY total_daily_amount DESC;

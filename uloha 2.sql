@@ -1,12 +1,12 @@
-CREATE VIEW regional_monthly_sales AS
+WITH category_sales AS (
+    SELECT 
+        product_category,
+        SUM(total_amount) AS total_amount
+    FROM flourmills_sales
+    GROUP BY product_category
+)
 SELECT 
-    c.region,
-    DATE_TRUNC('month', o.order_date)::date AS month,
-    SUM(o.sales) AS monthly_sales
-FROM 
-    customers c
-JOIN 
-    orders o ON c.customer_id = o.customer_id
-GROUP BY 
-    c.region,
-    DATE_TRUNC('month', o.order_date)::date;
+    product_category,
+    total_amount
+FROM category_sales
+ORDER BY total_amount DESC;

@@ -1,16 +1,30 @@
-CREATE OR REPLACE PROCEDURE apply_regional_discount(
-    p_region_name VARCHAR(20), 
-    p_discount_rate NUMERIC(4, 2)
+WITH ranked_invoice_items AS (
+    SELECT 
+        invoice_no,
+        stock_code,
+        description,
+        quantity,
+        unit_price,
+        (quantity * unit_price) AS amount,
+        ROW_NUMBER() OVER (
+            PARTITION BY invoice_no 
+            ORDER BY (quantity * unit_price) DESC
+        ) AS row_num
+    FROM 
+        retail_sales
 )
-LANGUAGE plpgsql
-AS $$
-BEGIN
-    UPDATE orders
-    SET sales = sales * (1 - p_discount_rate)
-    WHERE region = p_region_name;
-
-    RAISE NOTICE 'Zľava vo výške % bola úspešne aplikovaná pre región %.', p_discount_rate, p_region_name;
-END;
-$$;
-
-CALL apply_regional_discount('West', 0.10);
+SELECT 
+    invoice_no,
+    stock_code,
+    description,
+    quantity,
+    unit_price,
+    amount,
+    row_num
+FROM 
+    ranked_invoice_items
+WHERE 
+    row_num <= 3
+ORDER BY 
+    invoice_no ASC, 
+    row_num ASC;

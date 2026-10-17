@@ -1,17 +1,27 @@
-WITH RECURSIVE date_bounds AS (
+WITH customer_sales AS (
     SELECT 
-        MIN(sale_date) AS sale_date,
-        MAX(sale_date) AS max_date
-    FROM flourmills_sales
-    
-    UNION ALL
-    
+        customer_id,
+        SUM(quantity * unit_price) AS total_amount
+    FROM 
+        retail_sales
+    WHERE 
+        customer_id IS NOT NULL
+    GROUP BY 
+        customer_id
+),
+customer_quartiles AS (
     SELECT 
-        CAST(sale_date + INTERVAL '1 day' AS DATE),
-        max_date
-    FROM date_bounds
-    WHERE sale_date < max_date
+        customer_id,
+        total_amount,
+        NTILE(4) OVER (ORDER BY total_amount DESC) AS sales_quartile
+    FROM 
+        customer_sales
 )
-SELECT sale_date
-FROM date_bounds
-ORDER BY sale_date ASC;
+SELECT 
+    customer_id,
+    total_amount,
+    sales_quartile
+FROM 
+    customer_quartiles
+ORDER BY 
+    total_amount DESC;

@@ -1,17 +1,27 @@
-WITH ranked_sales AS (
+WITH product_price_lags AS (
     SELECT 
-        customer_id,
-        product_name,
-        sale_date,
-        total_amount,
-        ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY sale_date DESC) AS row_num
-    FROM flourmills_sales
+        stock_code,
+        invoice_no,
+        invoice_date,
+        unit_price AS current_price,
+        LAG(unit_price) OVER (
+            PARTITION BY stock_code 
+            ORDER BY invoice_date, invoice_no
+        ) AS previous_price
+    FROM 
+        retail_sales
 )
 SELECT 
-    customer_id,
-    product_name,
-    sale_date,
-    total_amount
-FROM ranked_sales
-WHERE row_num = 1
-ORDER BY customer_id ASC;
+    stock_code,
+    invoice_no,
+    invoice_date,
+    previous_price,
+    current_price,
+    (current_price - previous_price) AS price_difference
+FROM 
+    product_price_lags
+WHERE 
+    previous_price IS NOT NULL
+    AND current_price <> previous_price
+ORDER BY 
+    invoice_date ASC;

@@ -1,19 +1,43 @@
-CREATE OR REPLACE PROCEDURE get_sales_between(
-    p_start_date DATE, 
-    p_end_date DATE
+WITH customer_monthly_sales AS (
+    SELECT 
+        country,
+        DATE_TRUNC('month', invoice_date) AS month,
+        customer_id,
+        SUM(quantity * unit_price) AS total_amount
+    FROM 
+        retail_sales
+    WHERE 
+        customer_id IS NOT NULL
+    GROUP BY 
+        country, 
+        DATE_TRUNC('month', invoice_date),
+        customer_id
+),
+ranked_customers AS (
+    SELECT 
+        country,
+        month,
+        customer_id,
+        total_amount,
+        DENSE_RANK() OVER (
+            PARTITION BY country, month 
+            ORDER BY total_amount DESC
+        ) AS sales_rank
+    FROM 
+        customer_monthly_sales
 )
-LANGUAGE plpgsql
-AS $$
-DECLARE
-    v_total_sales NUMERIC(10, 2);
-BEGIN
-    SELECT COALESCE(SUM(sales), 0)
-    INTO v_total_sales
-    FROM orders
-    WHERE order_date BETWEEN p_start_date AND p_end_date;
-
-    RAISE NOTICE 'Obdobie od % do % | Celkový predaj: %', p_start_date, p_end_date, v_total_sales;
-END;
-$$;
-
-CALL get_sales_between('2024-01-01', '2024-03-31');
+SELECT 
+    country,
+    month,
+    customer_id,
+    total_amount,
+    sales_rank
+FROM 
+    ranked_customers
+WHERE 
+    sales_rank BETWEEN 1 AND 5
+ORDER BY 
+    country ASC, 
+    month ASC, 
+    sales_rank ASC, 
+    customer_id ASC;

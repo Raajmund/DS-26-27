@@ -1,41 +1,33 @@
-WITH RECURSIVE monthly_revenue AS (
+WITH monthly_country_sales AS (
     SELECT 
-        DATE_TRUNC('month', sale_date) AS month,
-        SUM(total_amount) AS revenue
-    FROM flourmills_sales
-    GROUP BY DATE_TRUNC('month', sale_date)
+        country,
+        DATE_TRUNC('month', invoice_date) AS month, -- alebo TO_CHAR(invoice_date, 'YYYY-MM') podľa preferencie formátu
+        SUM(quantity * unit_price) AS total_amount
+    FROM 
+        retail_sales
+    GROUP BY 
+        country, 
+        DATE_TRUNC('month', invoice_date)
 ),
-ordered_months AS (
+country_quartiles AS (
     SELECT 
-        ROW_NUMBER() OVER (ORDER BY month) AS rn,
+        country,
         month,
-        revenue
-    FROM monthly_revenue
-),
-cumulative_target AS (
-    SELECT 
-        rn,
-        month,
-        revenue,
-        revenue AS cumulative_revenue
-    FROM ordered_months
-    WHERE rn = 1
-    
-    UNION ALL
-    
-    SELECT 
-        o.rn,
-        o.month,
-        o.revenue,
-        c.cumulative_revenue + o.revenue
-    FROM cumulative_target c
-    JOIN ordered_months o ON o.rn = c.rn + 1
-    WHERE c.cumulative_revenue < 500000000
+        total_amount,
+        NTILE(4) OVER (
+            PARTITION BY country 
+            ORDER BY total_amount DESC
+        ) AS sales_quartile
+    FROM 
+        monthly_country_sales
 )
 SELECT 
-    rn,
-    month,
-    revenue,
-    cumulative_revenue
-FROM cumulative_target
-ORDER BY rn;
+    country,
+    month AS month,
+    total_amount,
+    sales_quartile
+FROM 
+    country_quartiles
+ORDER BY 
+    country ASC, 
+    month ASC;

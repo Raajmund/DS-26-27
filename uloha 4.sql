@@ -1,22 +1,34 @@
-WITH first_cte AS (
-    SELECT 
-        customer_type,
-        SUM(total_amount) AS revenue
-    FROM flourmills_sales
-    GROUP BY customer_type
+WITH unique_invoices AS (
+    SELECT DISTINCT 
+        customer_id,
+        invoice_no,
+        invoice_date
+    FROM 
+        retail_sales
+    WHERE 
+        customer_id IS NOT NULL
 ),
-second_cte AS (
+invoice_leads AS (
     SELECT 
-        customer_type,
-        revenue,
-        SUM(revenue) OVER () AS total_revenue,
-        ROUND((revenue * 100.0) / SUM(revenue) OVER (), 2) AS revenue_percentage
-    FROM first_cte
+        customer_id,
+        invoice_no,
+        invoice_date,
+        LEAD(invoice_date) OVER (
+            PARTITION BY customer_id 
+            ORDER BY invoice_date, invoice_no
+        ) AS next_invoice_date
+    FROM 
+        unique_invoices
 )
 SELECT 
-    customer_type,
-    revenue,
-    total_revenue,
-    revenue_percentage
-FROM second_cte
-ORDER BY revenue DESC;
+    customer_id,
+    invoice_no,
+        invoice_date,
+    next_invoice_date,
+    EXTRACT(DAY FROM (next_invoice_date - invoice_date))::INTEGER AS days_to_next_invoice
+FROM 
+    invoice_leads
+WHERE 
+    next_invoice_date IS NOT NULL
+ORDER BY 
+    days_to_next_invoice DESC;

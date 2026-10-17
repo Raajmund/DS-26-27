@@ -1,16 +1,32 @@
-CREATE OR REPLACE PROCEDURE get_customer_sales(p_customer_id VARCHAR(20))
-LANGUAGE plpgsql
-AS $$
-DECLARE
-    v_total_sales NUMERIC(10, 2);
-BEGIN
-    SELECT COALESCE(SUM(sales), 0)
-    INTO v_total_sales
-    FROM orders
-    WHERE customer_id = p_customer_id;
-
-    RAISE NOTICE 'Zákazník: %, Celkový predaj: %', p_customer_id, v_total_sales;
-END;
-$$;
-
-CALL get_customer_sales('C001');
+WITH ranked_purchases AS (
+    SELECT 
+        customer_id,
+        invoice_no,
+        invoice_date,
+        stock_code,
+        description,
+        quantity,
+        unit_price,
+        ROW_NUMBER() OVER (
+            PARTITION BY customer_id 
+            ORDER BY invoice_date ASC, invoice_no ASC
+        ) AS purchase_rank
+    FROM 
+        retail_sales
+    WHERE 
+        customer_id IS NOT NULL
+)
+SELECT 
+    customer_id,
+    invoice_no,
+    invoice_date,
+    stock_code,
+    description,
+    quantity,
+    unit_price
+FROM 
+    ranked_purchases
+WHERE 
+    purchase_rank = 1
+ORDER BY 
+    customer_id ASC;

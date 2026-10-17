@@ -1,24 +1,20 @@
-WITH total_sales_cte AS (
-    SELECT 
-        product_category,
-        product_name,
-        SUM(total_amount) AS total_product_sales
-    FROM flourmills_sales
-    GROUP BY product_category, product_name
-),
-ranked_products_cte AS (
-    SELECT 
-        product_category,
-        product_name,
-        total_product_sales,
-        RANK() OVER (PARTITION BY product_category ORDER BY total_product_sales DESC) AS category_rank
-    FROM total_sales_cte
-)
 SELECT 
-    product_category,
-    product_name,
-    total_product_sales,
-    category_rank
-FROM ranked_products_cte
-WHERE category_rank BETWEEN 1 AND 3
-ORDER BY product_category ASC, category_rank ASC; 
+    stock_code,
+    country,
+    invoice_date,
+    quantity,
+    ROUND(
+        AVG(quantity) OVER (
+            PARTITION BY stock_code, country 
+            ORDER BY invoice_date 
+            RANGE BETWEEN INTERVAL '7 days' PRECEDING AND CURRENT ROW
+        ), 2
+    ) AS avg_quantity_7_days
+FROM 
+    retail_sales
+WHERE 
+    quantity > 1
+ORDER BY 
+    stock_code, 
+    country, 
+    invoice_date;

@@ -1,11 +1,29 @@
+WITH ranked_items AS (
+    SELECT 
+        invoice_no,
+        stock_code,
+        description,
+        quantity,
+        unit_price,
+        DENSE_RANK() OVER (
+            PARTITION BY invoice_no 
+            ORDER BY unit_price DESC
+        ) AS price_rank
+    FROM 
+        retail_sales
+)
 SELECT 
-    f1.product_category,
-    f1.product_name,
-    f1.total_amount
-FROM flourmills_sales f1
-WHERE EXISTS (
-    SELECT 1
-    FROM flourmills_sales f2
-    WHERE f2.product_category = f1.product_category
-      AND f2.total_amount > 200000
-);
+    invoice_no,
+    stock_code,
+    description,
+    quantity,
+    unit_price,
+    price_rank
+FROM 
+    ranked_items
+WHERE 
+    price_rank BETWEEN 1 AND 5
+ORDER BY 
+    invoice_no ASC, 
+    price_rank ASC, 
+    stock_code ASC;

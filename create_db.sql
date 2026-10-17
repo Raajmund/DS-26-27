@@ -1,1 +1,1 @@
-CREATE DATABASE retail_sales;
+CREATE DATABASE retail;

@@ -1,33 +1,27 @@
-WITH monthly_country_sales AS (
+WITH monthly_summary AS (
     SELECT 
-        country,
-        DATE_TRUNC('month', invoice_date) AS month, -- alebo TO_CHAR(invoice_date, 'YYYY-MM') podľa preferencie formátu
-        SUM(quantity * unit_price) AS total_amount
-    FROM 
-        retail_sales
-    GROUP BY 
-        country, 
-        DATE_TRUNC('month', invoice_date)
+        DATE_TRUNC('month', order_date)::date AS month,
+        SUM(sales) AS monthly_sales
+    FROM orders
+    GROUP BY DATE_TRUNC('month', order_date)
 ),
-country_quartiles AS (
+sales_comparison AS (
     SELECT 
-        country,
         month,
-        total_amount,
-        NTILE(4) OVER (
-            PARTITION BY country 
-            ORDER BY total_amount DESC
-        ) AS sales_quartile
-    FROM 
-        monthly_country_sales
+        monthly_sales,
+        LAG(monthly_sales, 1) OVER (ORDER BY month) AS prev_month_sales,
+        monthly_sales - LAG(monthly_sales, 1) OVER (ORDER BY month) AS sales_change,
+        ROUND(
+            ((monthly_sales - LAG(monthly_sales, 1) OVER (ORDER BY month)) / LAG(monthly_sales, 1) OVER (ORDER BY month)) * 100, 
+            2
+        ) AS growth_percentage
+    FROM monthly_summary
 )
 SELECT 
-    country,
-    month AS month,
-    total_amount,
-    sales_quartile
-FROM 
-    country_quartiles
-ORDER BY 
-    country ASC, 
-    month ASC;
+    month,
+    monthly_sales,
+    prev_month_sales,
+    sales_change,
+    growth_percentage
+FROM sales_comparison
+ORDER BY month ASC;

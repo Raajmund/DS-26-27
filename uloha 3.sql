@@ -1,20 +1,14 @@
+WITH customer_sales AS (
+    SELECT 
+        c.customer_name,
+        SUM(o.sales) AS total_sales
+    FROM customers c
+    JOIN orders o ON c.customer_id = o.customer_id
+    GROUP BY c.customer_id, c.customer_name
+)
 SELECT 
-    stock_code,
-    country,
-    invoice_date,
-    quantity,
-    ROUND(
-        AVG(quantity) OVER (
-            PARTITION BY stock_code, country 
-            ORDER BY invoice_date 
-            RANGE BETWEEN INTERVAL '7 days' PRECEDING AND CURRENT ROW
-        ), 2
-    ) AS avg_quantity_7_days
-FROM 
-    retail_sales
-WHERE 
-    quantity > 1
-ORDER BY 
-    stock_code, 
-    country, 
-    invoice_date;
+    customer_name,
+    total_sales,
+    NTILE(4) OVER (ORDER BY total_sales DESC) AS quartile
+FROM customer_sales
+ORDER BY total_sales DESC;

@@ -1,13 +1,19 @@
-WITH daily_sales AS (
+WITH ranked_orders AS (
     SELECT 
-        sale_date,
-        SUM(total_amount) AS total_daily_amount
-    FROM flourmills_sales
-    GROUP BY sale_date
+        c.customer_name,
+        o.order_id,
+        o.order_date,
+        ROW_NUMBER() OVER (
+            PARTITION BY c.customer_id 
+            ORDER BY o.order_date DESC
+        ) AS rn
+    FROM customers c
+    JOIN orders o ON c.customer_id = o.customer_id
 )
 SELECT 
-    sale_date,
-    total_daily_amount
-FROM daily_sales
-WHERE total_daily_amount > 3000000
-ORDER BY total_daily_amount DESC;
+    customer_name,
+    order_id,
+    order_date
+FROM ranked_orders
+WHERE rn <= 2
+ORDER BY customer_name, rn;

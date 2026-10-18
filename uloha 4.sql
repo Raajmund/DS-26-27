@@ -1,34 +1,14 @@
-WITH unique_invoices AS (
-    SELECT DISTINCT 
-        customer_id,
-        invoice_no,
-        invoice_date
-    FROM 
-        retail_sales
-    WHERE 
-        customer_id IS NOT NULL
-),
-invoice_leads AS (
+WITH monthly_summary AS (
     SELECT 
-        customer_id,
-        invoice_no,
-        invoice_date,
-        LEAD(invoice_date) OVER (
-            PARTITION BY customer_id 
-            ORDER BY invoice_date, invoice_no
-        ) AS next_invoice_date
-    FROM 
-        unique_invoices
+        DATE_TRUNC('month', order_date)::date AS month,
+        SUM(sales) AS monthly_sales
+    FROM orders
+    GROUP BY DATE_TRUNC('month', order_date)
 )
 SELECT 
-    customer_id,
-    invoice_no,
-        invoice_date,
-    next_invoice_date,
-    EXTRACT(DAY FROM (next_invoice_date - invoice_date))::INTEGER AS days_to_next_invoice
-FROM 
-    invoice_leads
-WHERE 
-    next_invoice_date IS NOT NULL
-ORDER BY 
-    days_to_next_invoice DESC;
+    month,
+    monthly_sales,
+    LAG(monthly_sales, 1) OVER (ORDER BY month) AS prev_month_sales,
+    LEAD(monthly_sales, 1) OVER (ORDER BY month) AS next_month_sales
+FROM monthly_summary
+ORDER BY month ASC;

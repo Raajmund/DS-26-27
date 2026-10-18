@@ -1,32 +1,17 @@
-WITH ranked_purchases AS (
+WITH first_purchases AS (
     SELECT 
         customer_id,
-        invoice_no,
-        invoice_date,
-        stock_code,
-        description,
-        quantity,
-        unit_price,
-        ROW_NUMBER() OVER (
-            PARTITION BY customer_id 
-            ORDER BY invoice_date ASC, invoice_no ASC
-        ) AS purchase_rank
-    FROM 
-        retail_sales
-    WHERE 
-        customer_id IS NOT NULL
+        DATE_TRUNC('month', MIN(order_date))::date AS first_purchase_month
+    FROM orders
+    GROUP BY customer_id
 )
 SELECT 
-    customer_id,
-    invoice_no,
-    invoice_date,
-    stock_code,
-    description,
-    quantity,
-    unit_price
-FROM 
-    ranked_purchases
-WHERE 
-    purchase_rank = 1
-ORDER BY 
-    customer_id ASC;
+    COUNT(*) AS returning_customers_count
+FROM first_purchases fp
+WHERE fp.first_purchase_month = '2024-06-01'
+  AND EXISTS (
+      SELECT 1 
+      FROM orders o 
+      WHERE o.customer_id = fp.customer_id 
+        AND DATE_TRUNC('month', o.order_date)::date > fp.first_purchase_month
+  );

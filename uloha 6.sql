@@ -1,27 +1,16 @@
-WITH customer_sales AS (
+WITH customer_orders AS (
     SELECT 
-        customer_id,
-        SUM(quantity * unit_price) AS total_amount
-    FROM 
-        retail_sales
-    WHERE 
-        customer_id IS NOT NULL
-    GROUP BY 
-        customer_id
-),
-customer_quartiles AS (
-    SELECT 
-        customer_id,
-        total_amount,
-        NTILE(4) OVER (ORDER BY total_amount DESC) AS sales_quartile
-    FROM 
-        customer_sales
+        c.customer_id,
+        c.customer_name,
+        MAX(o.order_date) OVER (PARTITION BY c.customer_id) AS last_order_date,
+        MAX(o.order_date) OVER () AS latest_order_date
+    FROM customers c
+    JOIN orders o ON c.customer_id = o.customer_id
 )
-SELECT 
+SELECT DISTINCT
     customer_id,
-    total_amount,
-    sales_quartile
-FROM 
-    customer_quartiles
-ORDER BY 
-    total_amount DESC;
+    customer_name,
+    last_order_date
+FROM customer_orders
+WHERE last_order_date < latest_order_date - INTERVAL '90 days'
+ORDER BY last_order_date ASC;
